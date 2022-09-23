@@ -200,12 +200,16 @@ def index(request):
             subprocess.call(r'net use k: /del /Y', shell=True)
 
             error_code = e.args[0]
+            error_msg = ''
+
             if error_code == 'HY024':
                 error_msg = 'The network path was not found.'
             elif error_code == 'HY000':
                 error_msg = 'Could not find the file.'
             elif error_code == '42S02':
                 error_msg = 'Table name is not exist.'
+            elif error_code == 'IM002':
+                error_msg == 'Data source name not found and no default driver specified.'
 
             return HttpResponse(error_msg)
             #return HttpResponse('Something went wrong. Please check again.')

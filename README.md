@@ -9,7 +9,7 @@
    - `pip install requests`
 5. Before start the program, run `cd` on Command Prompt to change the directory to where `manage.py` file located.
 6. Run `py manage.py runserver 0.0.0.0:8000` on Command Prompt to start the program.
-7. Now you can access the program on web browser with `<your ip address>:8000`.
+7. Now you can access the program on web browser with `<host ip address>:8000`.
 8. If you do not know your ip address, you can run `ipconfig` on Command Prompt to check your device ip address.
 9. Then open new Command Prompt, run `cd` to change the directory to where `read.py` file located.
 10. Run `py read.py` on Command Prompt to start the program.

@@ -199,6 +199,7 @@ def index(request):
             # Disconnect anything on K
             subprocess.call(r'net use k: /del /Y', shell=True)
 
+            print(e)
             error_code = e.args[0]
             error_msg = 'Something went wrong. Please check and try again.'
 

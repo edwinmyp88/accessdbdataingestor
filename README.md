@@ -1,6 +1,6 @@
 # accessdbdataingestor
 
-1. Download zip file from main branch.
+1. Download zip file from main branch, and extract the zip file.
 2. Run `python --version` on Command Prompt to check is python installed.
 3. If python is not installed, you can go to [Python Website](https://www.python.org/downloads/) to install the latest version.
 4. Run the following commands on Command Prompt to install necessary python packages.

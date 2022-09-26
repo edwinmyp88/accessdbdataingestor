@@ -16,6 +16,11 @@
 11. You can download [SQLiteStudio](https://sqlitestudio.pl/), and then browse `db.sqlite3` to view the database.
 
 
+###### File Description
+
+1. `manage.py` is the file to start the program that allow us to do the operations by using web browser.
+2. `read.py` is the file to read from SQLite database to get Microsoft Access Database filepath, and then retrieve today data from Microsoft Access Database.
+
 ## Potential Error
 
 1. If the error message **Data source name not found and no default driver specified** is showed when adding new data source.

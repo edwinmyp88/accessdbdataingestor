@@ -197,7 +197,7 @@
                 <div class="row mb-1">
                     <label for="frequency" class="col-sm-2 col-form-label">Update Frequency : </label>
                     <div class="col-sm-3 input-g">
-                        <input type="text" class="form-control" id="frequency" value="{{ config.0.1 }}" />
+                        <input type="text" class="form-control" id="frequency" value="{{ config.0.1 }}" disabled />
                         <div class="input-group-append">
                             <span class="input-group-text">mins</span>
                         </div>
@@ -206,23 +206,24 @@
                 <div class="row mb-1">
                     <label for="endpoint" class="col-sm-2 col-form-label">Update Endpoint : </label>
                     <div class="col-sm-3">
-                        <input type="text" class="form-control" id="endpoint" value="{{ config.0.2 }}" />
+                        <input type="text" class="form-control" id="endpoint" value="{{ config.0.2 }}" disabled />
                     </div>
                 </div>
                 <div class="row mb-1">
                     <label for="username" class="col-sm-2 col-form-label">Username : </label>
                     <div class="col-sm-3">
-                        <input type="text" class="form-control" id="username" value="{{ config.0.3 }}" />
+                        <input type="text" class="form-control" id="username" value="{{ config.0.3 }}" disabled />
                     </div>
                 </div>
                 <div class="row mb-1">
                     <label for="password" class="col-sm-2 col-form-label">Password : </label>
                     <div class="col-sm-3">
-                        <input type="password" class="form-control" id="password" value="{{ config.0.4 }}" />
+                        <input type="password" class="form-control" id="password" value="{{ config.0.4 }}" disabled />
                     </div>
                 </div>
                 <div class="mt-1">
-                    <button type="button" class="btn btn-primary" id="btn_save">Save Setting</button>
+                    <button type="button" class="btn btn-primary" id="btn_modify">Modify Setting</button>
+                    <button type="button" class="btn btn-primary" id="btn_save" disabled>Save Setting</button>
                 </div>
                 <!--<button id="testing">Test Send Json</button>-->
             </div>
@@ -331,6 +332,17 @@
                     });                     
                 });
 
+                $("#btn_modify").click(function () {
+            
+                    $("#frequency").prop("disabled", false);
+                    $("#endpoint").prop("disabled", false);
+                    $("#username").prop("disabled", false);
+                    $("#password").prop("disabled", false);
+                    $("#btn_modify").prop("disabled", true);
+                    $("#btn_save").prop("disabled", false);
+
+                });
+
                 $("#btn_save").click(function () {
 
                     var frequency = $("#frequency").val();
@@ -346,6 +358,13 @@
                             alert(data);
                             var now = getDateTime();
                             document.getElementById("log_section").innerHTML += "<p>" + now + " New configuration is updated.</p>";
+
+                            $("#frequency").prop("disabled", true);
+                            $("#endpoint").prop("disabled", true);
+                            $("#username").prop("disabled", true);
+                            $("#password").prop("disabled", true);
+                            $("#btn_modify").prop("disabled", false);
+                            $("#btn_save").prop("disabled", true);
                         }
                     });
                 });

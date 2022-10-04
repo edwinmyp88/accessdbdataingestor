@@ -415,6 +415,9 @@
                     //alert("Active" + $(this).data("id"));
 
                     if ($(this).text() == "Start") {
+
+                        $(this).text("Starting");
+                        $(this).prop("disabled", true);
    
                         var url = window.location.href + "active/" + $(this).data("id") + "/";
 
@@ -429,6 +432,9 @@
                         });
 
                     } else if ($(this).text() == "Stop") {
+
+                        $(this).text("Stopping");
+                        $(this).prop("disabled", true);
 
                         var url = window.location.href + "active/" + $(this).data("id") + "/";
 

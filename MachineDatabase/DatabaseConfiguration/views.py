@@ -282,131 +282,264 @@ def active(request, id):
                 selected_table = db[3]
 
             headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-            x = requests.get('https://172.22.213.111/flows-1/api/lastRecordDatetime', params={'ip_address': ip_address, 'tables': selected_table}, headers=headers, verify=False)
-            response = json.loads(x.content)[0]
-            start_date = response['start_date'][0:10]
-            last_processed = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
+            x = requests.get('https://192.168.0.188/flows-1/api/lastRecordDatetime', params={'ip_address': ip_address, 'tables': selected_table}, headers=headers, verify=False)
 
-            t = datetime.datetime.now(datetime.timezone.utc).date()
+            try:
+                response = json.loads(x.content)[0]
+                start_date = response['start_date'][0:10]
+                last_processed = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
 
-            if last_processed <= t:
+                t = datetime.datetime.now(datetime.timezone.utc).date()
+
+                if last_processed <= t:
                 
+                    try:
+                        # Disconnect anything on T
+                        subprocess.call(r'net use t: /del', shell=True)
+
+                        # Connect to shared drive, use drive letter T
+                        subprocess.call("net use t: " + ip_address + " /user:" + credential, shell=True)
+
+                        conn = pyodbc.connect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=T:\\" + filename + ";")
+                        cursor1 = conn.cursor()
+
+                        delta = t - last_processed
+
+                        for i in range(delta.days + 1):
+                            day = last_processed + datetime.timedelta(days=i)
+                            day = day.strftime('%#m/%#d/%Y')
+                            print(day)
+                   
+                            cursor1.execute("SELECT * FROM " + selected_table + " WHERE [START DATE] LIKE ? ORDER BY id", day + "%")
+
+                            objects_list = []
+
+                            for row in cursor1.fetchall():
+
+                                obj = collections.OrderedDict()
+                                obj['ip_address'] = ip_address
+                                obj['tables'] = selected_table
+                                obj['old_id'] = row[0]
+                                obj['start_date'] = datetime.datetime.strftime(row[1], '%Y-%m-%d %H:%M:%S')
+                                obj['stop_date'] = datetime.datetime.strftime(row[2], '%Y-%m-%d %H:%M:%S')
+                                obj['machine_name'] = row[3]
+                                obj['package_name'] = row[4]
+                                obj['lot_number'] = row[5]
+                                obj['part_number'] = row[6]
+                                obj['part_type'] = row[7]
+                                obj['quantity_in'] = row[8]
+                                obj['operator_id'] = row[9]
+                                obj['total_good_qty'] = row[10]
+                                obj['total_rej_qty'] = row[11]
+
+                                try:
+                                    loading = time.strptime(row[12], '%H:%M:%S')
+                                    obj['loading_time'] = datetime.timedelta(hours=loading.tm_hour, minutes=loading.tm_min, seconds=loading.tm_sec).total_seconds()
+                                except:
+                                    obj['loading_time'] = 0
+
+                                try:
+                                    operation = time.strptime(row[13], '%H:%M:%S')
+                                    obj['operation_time'] = datetime.timedelta(hours=operation.tm_hour, minutes=operation.tm_min, seconds=operation.tm_sec).total_seconds()
+                                except:
+                                    obj['operation_time'] = 0
+
+                                try:
+                                    down = time.strptime(row[14], '%H:%M:%S')
+                                    obj['down_time'] = datetime.timedelta(hours=down.tm_hour, minutes=down.tm_min, seconds=down.tm_sec).total_seconds()
+                                except:
+                                    obj['down_time'] = 0
+
+                                try:
+                                    idling = time.strptime(row[15], '%H:%M:%S')
+                                    obj['idling_time'] = datetime.timedelta(hours=idling.tm_hour, minutes=idling.tm_min, seconds=idling.tm_sec).total_seconds()
+                                except:
+                                    obj['idling_time'] = 0
+
+                                obj['soft_jam'] = row[16]
+                                obj['hard_jam'] = row[17]
+
+                                try:
+                                    mtba = time.strptime(row[18], '%H:%M:%S')
+                                    obj['mtba'] = datetime.timedelta(hours=mtba.tm_hour, minutes=mtba.tm_min, seconds=mtba.tm_sec).total_seconds()
+                                except:
+                                    obj['mtba'] = 0
+
+                                try:
+                                    mtbf = time.strptime(row[19], '%H:%M:%S')
+                                    obj['mtbf'] = datetime.timedelta(hours=mtbf.tm_hour, minutes=mtbf.tm_min, seconds=mtbf.tm_sec).total_seconds()
+                                except:
+                                    obj['mtbf'] = 0
+
+                                obj['initial_v1_yield'] = row[20]
+                                obj['v1_yield'] = row[21]
+                                obj['initial_v2_yield'] = row[22]
+                                obj['v2_yield'] = row[23]
+                                obj['initial_v3_yield'] = row[24]
+                                obj['v3_yield'] = row[25]
+                                obj['initial_v4_yield'] = row[26]
+                                obj['v4_yield'] = row[27]
+                                obj['initial_v5_yield'] = row[28]
+                                obj['v5_yield'] = row[29]
+                                obj['initial_v6_yield'] = row[30]
+                                obj['v6_yield'] = row[31]
+                                obj['initial_v7_yield'] = row[32]
+                                obj['v7_yield'] = row[33]
+                                obj['bin_1_reject_crack'] = row[34]
+                                obj['bin_2_reject_geometric'] = row[35]
+                                obj['bin_3_rej'] = row[36]
+                                obj['bin_4_rej'] = row[37]
+                                obj['good_bin'] = row[38]
+                                obj['total_output'] = row[39]
+                                obj['initial_yield'] = row[40]
+                                obj['overall_yield'] = row[41]
+                                obj['initial_uph'] = row[42]
+                                obj['lot_uph'] = row[43]
+                                obj['rescan'] = row[44]
+
+                                objects_list.append(obj)
+
+
+                            for object in objects_list:
+                                print(json.dumps(object))
+                                try:
+                                    x = requests.post(endpoint, data=json.dumps(object), headers=headers, verify=False)
+                                except Exception as e:
+                                    print(e)
+                                    cursor.execute("UPDATE machine_db SET db_status = 'Failed Insert' WHERE id = " + str(id))
+                                    connection.commit()
+
+
+                        # Disconnect anything on T
+                        subprocess.call(r'net use t: /del /Y', shell=True)
+
+                        now = datetime.datetime.now()
+                        formatted_now = now.strftime('%Y-%m-%d %H:%M:00')
+                        new_next_read = now + datetime.timedelta(minutes=frequency)
+                        formatted_new_next_read = datetime.datetime.strftime(new_next_read, '%Y-%m-%d %H:%M:00')
+
+                        cursor.execute('UPDATE machine_db SET db_status = "Processed", datetime_processed = ' + '"' + formatted_now + '"' + ', next_read = ' + '"' + formatted_new_next_read + '"' + ' WHERE id = ' + str(id))
+
+                        return HttpResponse("Started Read from MS Access DB.")
+
+                    except:
+                        print('The network path was not found.')
+                        cursor.execute("UPDATE machine_db SET db_status = 'Lost Connection' WHERE id = " + str(id))
+                        connection.commit()
+                        return HttpResponse("Cannot start the machine. Please check and try again.")
+
+            except IndexError:
+                print("Cannot find previous data")
+
                 try:
                     # Disconnect anything on T
                     subprocess.call(r'net use t: /del', shell=True)
 
-                    # Connect to shared drive, use drive letter T
+                    # Connect to shared drive, use drive letter K
                     subprocess.call("net use t: " + ip_address + " /user:" + credential, shell=True)
 
                     conn = pyodbc.connect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=T:\\" + filename + ";")
                     cursor1 = conn.cursor()
+                    cursor1.execute("SELECT * FROM " + selected_table)
 
-                    delta = t - last_processed
+                    objects_list = []
 
-                    for i in range(delta.days + 1):
-                        day = last_processed + datetime.timedelta(days=i)
-                        day = day.strftime('%#m/%#d/%Y')
-                        print(day)
-                   
-                        cursor1.execute("SELECT * FROM " + selected_table + " WHERE [START DATE] LIKE ? ORDER BY id", day + "%")
+                    for row in cursor1.fetchall():
 
-                        objects_list = []
+                        obj = collections.OrderedDict()
+                        obj['ip_address'] = ip_address
+                        obj['tables'] = selected_table
+                        obj['old_id'] = row[0]
+                        obj['start_date'] = datetime.datetime.strftime(row[1], '%Y-%m-%d %H:%M:%S')
+                        obj['stop_date'] = datetime.datetime.strftime(row[2], '%Y-%m-%d %H:%M:%S')
+                        obj['machine_name'] = row[3]
+                        obj['package_name'] = row[4]
+                        obj['lot_number'] = row[5]
+                        obj['part_number'] = row[6]
+                        obj['part_type'] = row[7]
+                        obj['quantity_in'] = row[8]
+                        obj['operator_id'] = row[9]
+                        obj['total_good_qty'] = row[10]
+                        obj['total_rej_qty'] = row[11]
 
-                        for row in cursor1.fetchall():
+                        try:
+                            loading = time.strptime(row[12], '%H:%M:%S')
+                            obj['loading_time'] = datetime.timedelta(hours=loading.tm_hour, minutes=loading.tm_min, seconds=loading.tm_sec).total_seconds()
+                        except:
+                            obj['loading_time'] = 0
 
-                            obj = collections.OrderedDict()
-                            obj['ip_address'] = ip_address
-                            obj['tables'] = selected_table
-                            obj['old_id'] = row[0]
-                            obj['start_date'] = datetime.datetime.strftime(row[1], '%Y-%m-%d %H:%M:%S')
-                            obj['stop_date'] = datetime.datetime.strftime(row[2], '%Y-%m-%d %H:%M:%S')
-                            obj['machine_name'] = row[3]
-                            obj['package_name'] = row[4]
-                            obj['lot_number'] = row[5]
-                            obj['part_number'] = row[6]
-                            obj['part_type'] = row[7]
-                            obj['quantity_in'] = row[8]
-                            obj['operator_id'] = row[9]
-                            obj['total_good_qty'] = row[10]
-                            obj['total_rej_qty'] = row[11]
+                        try:
+                            operation = time.strptime(row[13], '%H:%M:%S')
+                            obj['operation_time'] = datetime.timedelta(hours=operation.tm_hour, minutes=operation.tm_min, seconds=operation.tm_sec).total_seconds()
+                        except:
+                            obj['operation_time'] = 0
 
-                            try:
-                                loading = time.strptime(row[12], '%H:%M:%S')
-                                obj['loading_time'] = datetime.timedelta(hours=loading.tm_hour, minutes=loading.tm_min, seconds=loading.tm_sec).total_seconds()
-                            except:
-                                obj['loading_time'] = 0
+                        try:
+                            down = time.strptime(row[14], '%H:%M:%S')
+                            obj['down_time'] = datetime.timedelta(hours=down.tm_hour, minutes=down.tm_min, seconds=down.tm_sec).total_seconds()
+                        except:
+                            obj['down_time'] = 0
 
-                            try:
-                                operation = time.strptime(row[13], '%H:%M:%S')
-                                obj['operation_time'] = datetime.timedelta(hours=operation.tm_hour, minutes=operation.tm_min, seconds=operation.tm_sec).total_seconds()
-                            except:
-                                obj['operation_time'] = 0
+                        try:
+                            idling = time.strptime(row[15], '%H:%M:%S')
+                            obj['idling_time'] = datetime.timedelta(hours=idling.tm_hour, minutes=idling.tm_min, seconds=idling.tm_sec).total_seconds()
+                        except:
+                            obj['idling_time'] = 0
 
-                            try:
-                                down = time.strptime(row[14], '%H:%M:%S')
-                                obj['down_time'] = datetime.timedelta(hours=down.tm_hour, minutes=down.tm_min, seconds=down.tm_sec).total_seconds()
-                            except:
-                                obj['down_time'] = 0
+                        obj['soft_jam'] = row[16]
+                        obj['hard_jam'] = row[17]
 
-                            try:
-                                idling = time.strptime(row[15], '%H:%M:%S')
-                                obj['idling_time'] = datetime.timedelta(hours=idling.tm_hour, minutes=idling.tm_min, seconds=idling.tm_sec).total_seconds()
-                            except:
-                                obj['idling_time'] = 0
+                        try:
+                            mtba = time.strptime(row[18], '%H:%M:%S')
+                            obj['mtba'] = datetime.timedelta(hours=mtba.tm_hour, minutes=mtba.tm_min, seconds=mtba.tm_sec).total_seconds()
+                        except:
+                            obj['mtba'] = 0
 
-                            obj['soft_jam'] = row[16]
-                            obj['hard_jam'] = row[17]
+                        try:
+                            mtbf = time.strptime(row[19], '%H:%M:%S')
+                            obj['mtbf'] = datetime.timedelta(hours=mtbf.tm_hour, minutes=mtbf.tm_min, seconds=mtbf.tm_sec).total_seconds()
+                        except:
+                            obj['mtbf'] = 0
 
-                            try:
-                                mtba = time.strptime(row[18], '%H:%M:%S')
-                                obj['mtba'] = datetime.timedelta(hours=mtba.tm_hour, minutes=mtba.tm_min, seconds=mtba.tm_sec).total_seconds()
-                            except:
-                                obj['mtba'] = 0
+                        obj['initial_v1_yield'] = row[20]
+                        obj['v1_yield'] = row[21]
+                        obj['initial_v2_yield'] = row[22]
+                        obj['v2_yield'] = row[23]
+                        obj['initial_v3_yield'] = row[24]
+                        obj['v3_yield'] = row[25]
+                        obj['initial_v4_yield'] = row[26]
+                        obj['v4_yield'] = row[27]
+                        obj['initial_v5_yield'] = row[28]
+                        obj['v5_yield'] = row[29]
+                        obj['initial_v6_yield'] = row[30]
+                        obj['v6_yield'] = row[31]
+                        obj['initial_v7_yield'] = row[32]
+                        obj['v7_yield'] = row[33]
+                        obj['bin_1_reject_crack'] = row[34]
+                        obj['bin_2_reject_geometric'] = row[35]
+                        obj['bin_3_rej'] = row[36]
+                        obj['bin_4_rej'] = row[37]
+                        obj['good_bin'] = row[38]
+                        obj['total_output'] = row[39]
+                        obj['initial_yield'] = row[40]
+                        obj['overall_yield'] = row[41]
+                        obj['initial_uph'] = row[42]
+                        obj['lot_uph'] = row[43]
+                        obj['rescan'] = row[44]
 
-                            try:
-                                mtbf = time.strptime(row[19], '%H:%M:%S')
-                                obj['mtbf'] = datetime.timedelta(hours=mtbf.tm_hour, minutes=mtbf.tm_min, seconds=mtbf.tm_sec).total_seconds()
-                            except:
-                                obj['mtbf'] = 0
-
-                            obj['initial_v1_yield'] = row[20]
-                            obj['v1_yield'] = row[21]
-                            obj['initial_v2_yield'] = row[22]
-                            obj['v2_yield'] = row[23]
-                            obj['initial_v3_yield'] = row[24]
-                            obj['v3_yield'] = row[25]
-                            obj['initial_v4_yield'] = row[26]
-                            obj['v4_yield'] = row[27]
-                            obj['initial_v5_yield'] = row[28]
-                            obj['v5_yield'] = row[29]
-                            obj['initial_v6_yield'] = row[30]
-                            obj['v6_yield'] = row[31]
-                            obj['initial_v7_yield'] = row[32]
-                            obj['v7_yield'] = row[33]
-                            obj['bin_1_reject_crack'] = row[34]
-                            obj['bin_2_reject_geometric'] = row[35]
-                            obj['bin_3_rej'] = row[36]
-                            obj['bin_4_rej'] = row[37]
-                            obj['good_bin'] = row[38]
-                            obj['total_output'] = row[39]
-                            obj['initial_yield'] = row[40]
-                            obj['overall_yield'] = row[41]
-                            obj['initial_uph'] = row[42]
-                            obj['lot_uph'] = row[43]
-                            obj['rescan'] = row[44]
-
-                            objects_list.append(obj)
+                        objects_list.append(obj)
 
 
-                        for object in objects_list:
-                            print(json.dumps(object))
-                            try:
-                                x = requests.post(endpoint, data=json.dumps(object), headers=headers, verify=False)
-                            except Exception as e:
-                                print(e)
-                                cursor.execute("UPDATE machine_db SET db_status = 'Failed Insert' WHERE id = " + str(id))
-                                connection.commit()
+                    headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
+                    for object in objects_list:
+                        print(json.dumps(object))
+                        try:
+                            x = requests.post(endpoint, data=json.dumps(object), headers=headers, verify=False)
+                        except Exception as e:
+                            print(e)
+                            cursor.execute("UPDATE machine_db SET db_status = 'Failed Insert' WHERE id = " + str(id))
+                            connection.commit()
 
                     # Disconnect anything on T
                     subprocess.call(r'net use t: /del /Y', shell=True)
@@ -426,6 +559,14 @@ def active(request, id):
                     connection.commit()
                     return HttpResponse("Cannot start the machine. Please check and try again.")
 
+
+            #now = datetime.datetime.now()
+            #new_next_read = now + datetime.timedelta(minutes=frequency)
+            #formatted_new_next_read = datetime.datetime.strftime(new_next_read, '%Y-%m-%d %H:%M:00')
+
+            #cursor.execute('UPDATE machine_db SET db_status = "Processed", next_read = ' + '"' + formatted_new_next_read + '"' + ' WHERE id = ' + str(id))
+
+            #return HttpResponse("START for receiving data.")
 
     else:
         return HttpResponse('Invalid URL Request.')

@@ -34,7 +34,7 @@
 ## Node-RED
 
 1. Change the HTTP endpoint name if update the endpoint on the webpage.
-2. Change the litmus_ip_address variable in views.py to current litmus's ip address.
+2. Change the litmus_ip_address variable in views.py file located in MachineDatabase/DatabaseConfiguration to current litmus's ip address.
 
 ## Potential Error
 

@@ -13,6 +13,9 @@ import threading
 
 # Create your views here.
 
+litmus_ip_address = 'https://192.168.0.188/'
+lastRecordDatetime = litmus_ip_address + 'flows-1/api/lastRecordDatetime'
+
 def printit():
     threading.Timer(10.0, printit).start()
     c = connection.cursor()
@@ -282,7 +285,7 @@ def active(request, id):
                 selected_table = db[3]
 
             headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-            x = requests.get('https://192.168.0.188/flows-1/api/lastRecordDatetime', params={'ip_address': ip_address, 'tables': selected_table}, headers=headers, verify=False)
+            x = requests.get(lastRecordDatetime, params={'ip_address': ip_address, 'tables': selected_table}, headers=headers, verify=False)
 
             try:
                 response = json.loads(x.content)[0]

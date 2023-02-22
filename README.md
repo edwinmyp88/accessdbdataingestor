@@ -31,6 +31,11 @@
 1. `manage.py` is the file to start the program that allow us to do the operations by using web browser.
 2. `read.py` is the file to read from SQLite database to get Microsoft Access Database filepath, and then retrieve today data from Microsoft Access Database.
 
+## Node-RED
+
+1. Change the HTTP endpoint name if update the endpoint on the webpage.
+2. Change the litmus_ip_address variable in views.py to current litmus's ip address.
+
 ## Potential Error
 
 1. If the error message **Data source name not found and no default driver specified** is showed when adding new data source.
